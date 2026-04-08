@@ -709,32 +709,74 @@
     <section id="sec-help" class="section">
       <div class="panel">
         <div class="panel-header">
-          <span class="panel-title"><i class="fas fa-question-circle"></i> Central de Ajuda & Guia Rápido</span>
+          <span class="panel-title"><i class="fas fa-book"></i> Manual de Operações (Mission Control)</span>
         </div>
-        <p style="margin-bottom: 32px; color: var(--text-muted); font-size: 16px;">Bem-vindo ao Mission Control. Esta nova versão baseada em <strong>Entidades Hierárquicas</strong> melhora a precisão analítica do robô.</p>
-        
+
+        <div style="text-align: center; margin-bottom: 40px;">
+          <h3 style="font-size: 24px; color: var(--text-main); margin-bottom: 16px;">Arquitetura Baseada em Versões</h3>
+          <p style="color: var(--text-muted); max-width: 750px; margin: 0 auto 30px auto; font-size: 15px;">
+            O Mission Control funciona com um sistema de <strong>Entidades Hierárquicas</strong>. Isto significa que tudo o que você regista (uma partida, uma falha, uma nova peça) está "amarrado" a uma <strong>Versão Específica</strong> do robô. Assim, você consegue provar com dados exatos se a "Garra v2" melhorou a eficiência em relação à "Garra v1".
+          </p>
+
+          <div style="background: #ffffff; padding: 24px; border-radius: var(--radius-md); border: 2px solid var(--border-light); display: inline-block; max-width: 100%; box-shadow: var(--shadow-sm);">
+            <img src="diagrama.svg" alt="Fluxograma da Árvore de Dados do Robô" style="max-width: 100%; height: auto; display: block; margin: 0 auto; border-radius: var(--radius-sm);">
+            <div style="font-size: 11px; color: #6b7280; margin-top: 16px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 1px;">Estrutura da Árvore de Dados no Firebase</div>
+          </div>
+        </div>
+
         <div class="help-grid">
           <div class="help-card">
-            <div class="help-icon"><i class="fas fa-code-branch"></i></div>
-            <h3>O Seletor Global</h3>
-            <p>No topo da página, você escolhe qual versão do robô está ativa.</p>
+            <div class="help-icon"><i class="fas fa-sitemap"></i></div>
+            <h3>1. O Workflow Correto</h3>
+            <p>Siga este ciclo de desenvolvimento para manter o seu banco de dados sempre preciso e limpo:</p>
             <ul>
-              <li><i class="fas fa-check-circle"></i> Tudo o que você fizer no site é aplicado à versão selecionada.</li>
-              <li><i class="fas fa-check-circle"></i> Se você salvar uma partida, ela pertence àquela versão.</li>
-              <li><i class="fas fa-check-circle"></i> Os gráficos refletem apenas a versão atual, isolando variáveis antigas.</li>
+              <li><i class="fas fa-arrow-right"></i> <strong>Blueprint:</strong> Comece por criar uma Nova Versão do Robô (Ex: "v1.0").</li>
+              <li><i class="fas fa-arrow-right"></i> <strong>DevOps:</strong> Registe as modificações e as peças que testou nessa versão.</li>
+              <li><i class="fas fa-arrow-right"></i> <strong>Partidas:</strong> Jogue! Os pontos vão diretamente para a versão ativa no topo da tela.</li>
+              <li><i class="fas fa-arrow-right"></i> <strong>Analytics:</strong> Veja os gráficos para saber se precisa criar uma "v1.1".</li>
             </ul>
           </div>
+
           <div class="help-card">
-            <div class="help-icon"><i class="fas fa-cubes"></i></div>
-            <h3>Criar Novas Versões</h3>
-            <p>Acesse a aba <strong>Blueprint</strong> para criar uma nova versão.</p>
+            <div class="help-icon"><i class="fas fa-globe"></i></div>
+            <h3>2. O Seletor Global (Topo)</h3>
+            <p>O menu suspenso no topo é a "Máquina do Tempo" do sistema.</p>
             <ul>
-              <li><i class="fas fa-check-circle"></i> Digite um nome (ex: METALINA) e uma versão (ex: v2.0).</li>
-              <li><i class="fas fa-check-circle"></i> Preencha o hardware atual.</li>
-              <li><i class="fas fa-check-circle"></i> Ao clicar em Gravar, a nova versão aparecerá no Seletor Global e estará pronta para receber partidas limpas.</li>
+              <li><i class="fas fa-exclamation-circle"></i> Tudo o que for salvo (partidas ou engenharia) será guardado <strong>apenas</strong> na versão que estiver selecionada lá em cima.</li>
+              <li><i class="fas fa-chart-line"></i> Troque a versão no seletor e todos os gráficos e tabelas atualizarão magicamente para refletir o passado.</li>
+            </ul>
+          </div>
+
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-cloud-download-alt"></i></div>
+            <h3>3. Magia do "Puxar Deployed"</h3>
+            <p>Na aba Blueprint, o botão "Puxar Dados da Nuvem" constrói o seu robô automaticamente.</p>
+            <ul>
+              <li><i class="fas fa-search"></i> Ele varre <strong>toda a base de dados</strong> global de engenharia.</li>
+              <li><i class="fas fa-filter"></i> Ignora os testes e puxa <strong>apenas</strong> as peças marcadas com o status <code>Deployed (Competição)</code>.</li>
+              <li><i class="fas fa-magic"></i> Assim, você não precisa digitar nada para montar o BOM da nova versão.</li>
+            </ul>
+          </div>
+
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-balance-scale-right"></i></div>
+            <h3>4. Compare (Comprovar Evolução)</h3>
+            <p>Excelente para justificar escolhas de design para os juízes do prêmio Innovate/Design.</p>
+            <ul>
+              <li><i class="fas fa-eye"></i> Selecione a versão antiga (A) e a nova (B).</li>
+              <li><i class="fas fa-check"></i> O painel destaca em <span style="color:var(--brand-tele); font-weight:bold;">verde</span> os atributos que melhoraram (ex: ficou mais leve) e em <span style="color:var(--brand-red); font-weight:bold;">vermelho</span> o que piorou (ex: ficou mais caro).</li>
             </ul>
           </div>
         </div>
+
+        <div class="help-tip" style="margin-top: 32px; display: flex; gap: 16px; align-items: flex-start;">
+          <i class="fas fa-lightbulb" style="font-size: 24px; color: var(--orange); margin-top: 4px;"></i>
+          <div>
+            <strong style="display: block; margin-bottom: 4px; font-size: 14px; color: var(--text-main);">Dica de Ouro do MetalLab:</strong> 
+            <span style="color: var(--text-main);">Nunca misture partidas de duas configurações mecânicas diferentes na mesma versão. Se você mudou a relação de engrenagens do braço, vá no Blueprint, crie a versão "v1.2" e grave as novas partidas lá. Isso garante que as estatísticas do Analytics não fiquem contaminadas!</span>
+          </div>
+        </div>
+
       </div>
     </section>
 
