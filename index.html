@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mission Control — MetalLAB</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    } else {
+      localStorage.setItem('theme', 'light');
+    }
+  </script>
+
+  <style>
+    /* ========== ESTILOS GLOBAIS (MANTIDOS DA VERSÃO ANTERIOR) ========== */
+    :root {
+      --orange: #FF5E00;
+      --orange-hover: #E05300;
+      --orange-glow: rgba(255, 94, 0, 0.3);
+      --orange-light: rgba(255, 94, 0, 0.1);
+      --black-pure: #000000;
+      --black-soft: #121212;
+      --black-mute: #242424;
+      --white-pure: #ffffff;
+      --white-soft: #f4f4f5;
+      --bg-body: var(--white-soft);
+      --bg-surface: var(--white-pure);
+      --bg-input: #e9ecef;
+      --border-light: #d1d5db;
+      --border-focus: var(--black-pure);
+      --text-main: var(--black-pure);
+      --text-muted: #6b7280;
+      --radius-sm: 4px; --radius-md: 8px; --radius-full: 9999px;
+      --shadow-sm: 0 4px 6px rgba(0,0,0,0.05);
+      --shadow-glow: 0 0 15px var(--orange-glow);
+      --shadow-float: 0 15px 30px -5px rgba(0,0,0,0.2);
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --brand-red: #dc2626;    
+      --brand-tele: #16a34a;   
+      --brand-warn: #f59e0b;
+      --brand-blue: #3b82f6;
+    }
+
+    html.dark-theme, body.dark-theme {
+      --bg-body: var(--black-pure);
+      --bg-surface: var(--black-soft);
+      --bg-input: var(--black-mute);
+      --border-light: #333333;
+      --border-focus: var(--orange);
+      --text-main: var(--white-pure);
+      --text-muted: #888888;
+      --shadow-sm: 0 4px 6px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body); color: var(--text-main);
+      line-height: 1.6; padding-bottom: 120px;
+      background-image: linear-gradient(var(--border-light) 1px, transparent 1px), linear-gradient(90deg, var(--border-light) 1px, transparent 1px);
+      background-size: 40px 40px; background-position: center top;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--black-pure); border-bottom: 2px solid var(--orange);
+      padding: 12px 24px; display: flex; justify-content: space-between; align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .logo-container { display: flex; align-items: center; gap: 12px; }
+    .logo-container h1 { font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #fff; }
+    .badge-decode { font-family: 'JetBrains Mono', monospace; background: var(--orange); color: #000; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 4px; }
+    
+    .nav-tabs { display: flex; gap: 6px; background: var(--black-soft); padding: 4px; border-radius: var(--radius-sm); border: 1px solid #333; overflow-x: auto;}
+    .nav-tab {
+      background: transparent; border: none; padding: 8px 16px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: #888;
+      cursor: pointer; transition: var(--transition); text-transform: uppercase; white-space: nowrap;
+    }
+    .nav-tab:hover { color: #fff; }
+    .nav-tab.active { background: var(--orange); color: #000; box-shadow: var(--shadow-glow); }
+
+    .theme-btn { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; transition: var(--transition); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+    .theme-btn:hover { color: var(--orange); }
+    .theme-btn .fa-sun { display: none; }
+    .theme-btn .fa-moon { display: block; }
+    body.dark-theme .theme-btn .fa-sun { display: block; }
+    body.dark-theme .theme-btn .fa-moon { display: none; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+    .section { display: none; animation: fadeUp 0.3s ease; }
+    .section.active { display: block; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 28px; margin-bottom: 24px; box-shadow: var(--shadow-sm); transition: var(--transition); }
+    .panel:hover { border-color: var(--border-focus); }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; gap: 10px; }
+    .panel-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
+    .panel-title i { color: var(--orange); }
+    
+    .hud-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .hud-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 20px; display: flex; flex-direction: column; justify-content: center; border-bottom: 3px solid var(--text-main); position: relative; overflow: hidden; }
+    .hud-card.accent { border-bottom-color: var(--orange); }
+    .hud-card.danger { border-bottom-color: var(--brand-red); }
+    .hud-lbl { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .hud-val { font-family: 'JetBrains Mono', monospace; font-size: 36px; font-weight: 700; color: var(--text-main); line-height: 1; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .col-span-2 { grid-column: span 2; }
+    .fg { display: flex; flex-direction: column; gap: 8px; }
+    
+    label { font-size: 12px; font-weight: 600; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 6px;}
+
+    input[type="text"], input[type="number"]:not(.hud-input), input[type="url"], select, textarea {
+      background: var(--bg-input); color: var(--text-main); border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+      padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 13px; transition: var(--transition); width: 100%; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--orange); background: var(--bg-surface); box-shadow: -4px 0 0 var(--orange); }
+    textarea { min-height: 80px; resize: vertical; }
+
+    .counter-widget { display: flex; align-items: center; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-sm); height: 46px; }
+    .c-btn { background: transparent; border: none; color: var(--text-muted); width: 46px; height: 100%; font-size: 18px; cursor: pointer; transition: 0.1s; }
+    .c-btn:hover { background: var(--orange); color: #fff; }
+    .c-btn.danger:hover { background: var(--brand-red); color: #fff; }
+    .c-val { flex: 1; text-align: center; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 18px; color: var(--text-main); }
+
+    .segmented { display: flex; background: var(--bg-input); border-radius: var(--radius-sm); padding: 4px; border: 1px solid var(--border-light); }
+    .seg-btn { flex: 1; background: transparent; border: none; border-radius: 4px; padding: 10px 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+    .seg-btn.active { background: var(--text-main); color: var(--bg-body); box-shadow: var(--shadow-sm); }
+    .seg-btn.active-orange { background: var(--orange); color: var(--black-pure); box-shadow: var(--shadow-glow); }
+
+    .tag-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag { padding: 8px 16px; font-size: 12px; font-weight: 600; border: 1px solid var(--border-light); border-radius: var(--radius-full); background: var(--bg-input); color: var(--text-muted); cursor: pointer; transition: var(--transition); user-select: none; font-family: 'JetBrains Mono', monospace; }
+    .tag:hover { border-color: var(--text-main); color: var(--text-main); }
+    .tag.active { background: var(--text-main); color: var(--bg-body); border-color: var(--text-main); }
+    .tag.active-orange { background: var(--orange); color: var(--black-pure); border-color: var(--orange); box-shadow: var(--shadow-glow); }
+
+    .telemetry-group { display: flex; background: var(--bg-input); border: 1px solid var(--border-light); border-radius: var(--radius-sm); overflow: hidden; }
+    .telemetry-col { flex: 1; padding: 12px 10px; text-align: center; border-right: 1px solid var(--border-light); }
+    .telemetry-col:last-child { border-right: none; background: rgba(0,0,0,0.03); }
+    body.dark-theme .telemetry-col:last-child { background: rgba(255,255,255,0.03); }
+    .tele-val { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 700; background: transparent; border: none; color: var(--text-main); width: 100%; text-align: center; outline: none; }
+    .tele-lbl { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;}
+    .delta-pos { color: var(--brand-tele) !important; }
+    .delta-neg { color: var(--brand-red) !important; }
+
+    .timeline { position: relative; padding-left: 30px; margin-top: 20px; }
+    .timeline::before { content: ''; position: absolute; left: 7px; top: 0; bottom: 0; width: 2px; background: var(--border-light); }
+    .ticket-entry { position: relative; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border-left: 4px solid var(--border-focus); transition: var(--transition); }
+    .ticket-entry:hover { border-color: var(--orange); box-shadow: var(--shadow-glow); border-left-color: var(--orange); }
+    .timeline-dot { position: absolute; left: -31px; top: 24px; width: 14px; height: 14px; border-radius: 50%; background: var(--orange); border: 3px solid var(--bg-body); }
+    .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .ticket-id { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--text-main); background: var(--border-light); padding: 4px 8px; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px;}
+    .ticket-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-top: 8px; line-height: 1.3;}
+    .ticket-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; align-items: center; margin-top: 8px; font-family: 'JetBrains Mono'; text-transform: uppercase;}
+    .status-testing { background: rgba(245, 158, 11, 0.1); color: var(--brand-warn); border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-deployed { background: rgba(16, 185, 129, 0.1); color: var(--brand-tele); border: 1px solid rgba(16, 185, 129, 0.2); }
+    .status-failed { background: rgba(239, 68, 68, 0.1); color: var(--brand-red); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; border-top: 1px solid var(--border-light); padding-top: 16px; }
+    .data-block { background: var(--bg-input); padding: 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
+    .data-block.full { grid-column: 1 / -1; }
+    .data-block h4 { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.05em; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 6px;}
+    .data-block p { font-size: 14px; color: var(--text-main); white-space: pre-wrap; line-height: 1.5; }
+
+    .robot-map-container { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; align-items: center; margin-top: 30px; position: relative; }
+    .robot-center { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-input); border: 2px dashed var(--border-light); border-radius: var(--radius-md); padding: 30px 20px; text-align: center; position: relative; }
+    .robot-image { width: 100%; max-width: 350px; height: auto; margin-bottom: 15px; filter: drop-shadow(0 15px 20px rgba(0,0,0,0.15)); transition: var(--transition); }
+    body.dark-theme .robot-image { filter: drop-shadow(0 15px 20px rgba(255,94,0,0.2)); }
+    
+    .blueprint-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); position: relative; transition: var(--transition); }
+    .blueprint-card:focus-within { border-color: var(--orange); box-shadow: var(--shadow-glow); }
+    .blueprint-header { background: var(--orange); color: var(--black-pure); padding: 8px 12px; font-weight: 700; font-size: 12px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; }
+    .blueprint-body { padding: 12px; }
+    
+    .bp-input-group { display: flex; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-light); }
+    .bp-input-group input { border: none; border-radius: 0; background: var(--bg-input); }
+    .bp-input-group input:focus { background: var(--bg-surface); }
+    .bp-ver { width: 60%; }
+    .bp-cost { width: 40%; border-left: 1px solid var(--border-light) !important; color: var(--brand-tele) !important; font-weight: 700;}
+
+    .comp-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px; border-radius: var(--radius-md); overflow: hidden; }
+    .comp-table th, .comp-table td { border: 1px solid var(--border-light); padding: 14px; text-align: center; }
+    .comp-table th { background: var(--bg-input); color: var(--text-muted); font-weight: 700; text-transform: uppercase; font-size: 11px; font-family: 'Inter', sans-serif;}
+    .comp-table tr:hover { background: var(--orange-light); }
+    .comp-better { color: var(--brand-tele); font-weight: 700; }
+    .comp-worse { color: var(--brand-red); font-weight: 700; }
+    .comp-diff { background: rgba(255, 94, 0, 0.1); color: var(--orange); font-weight: 700;}
+
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+    .chart-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 24px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; }
+    .chart-card h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; color: var(--text-main); font-family: 'JetBrains Mono', monospace; text-align: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px; }
+    .chart-wrapper { position: relative; width: 100%; height: 280px; flex-grow: 1; display: flex; justify-content: center; align-items: center; }
+
+    .matches-table-container { max-height: 400px; overflow-y: auto; margin-top: 24px; border: 1px solid var(--border-light); border-radius: var(--radius-md); }
+    .matches-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .matches-table th { background: var(--bg-input); color: var(--text-main); font-weight: 700; text-transform: uppercase; font-size: 10px; padding: 12px 8px; text-align: left; border-bottom: 1px solid var(--border-light); position: sticky; top: 0; z-index: 1; }
+    .matches-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-light); color: var(--text-main); }
+    .matches-table tr:hover { background: var(--orange-light); }
+    .delete-match-btn { background: none; border: none; color: var(--brand-red); cursor: pointer; font-size: 14px; transition: 0.2s; }
+    .delete-match-btn:hover { color: #b91c1c; transform: scale(1.1); }
+
+    .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+    .help-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 24px; transition: var(--transition); }
+    .help-card:hover { border-color: var(--orange); }
+    .help-icon { font-size: 28px; color: var(--orange); margin-bottom: 16px; }
+    .help-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+    .help-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 12px; }
+    .help-card ul { list-style: none; padding-left: 0; }
+    .help-card li { margin-bottom: 8px; font-size: 13px; display: flex; align-items: flex-start; gap: 8px; color: var(--text-main); }
+    .help-card li i { color: var(--orange); width: 18px; margin-top: 3px; }
+    .help-tip { background: var(--orange-light); border-left: 4px solid var(--orange); padding: 12px 16px; border-radius: var(--radius-sm); margin-top: 16px; font-size: 13px; }
+    .faq-item { margin-bottom: 20px; border-bottom: 1px solid var(--border-light); padding-bottom: 16px; }
+    .faq-item h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--text-main); }
+    .faq-item p { color: var(--text-muted); }
+
+    .toast-container { position: fixed; bottom: 100px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; }
+    .toast { background: var(--bg-surface); border-left: 6px solid var(--orange); color: var(--text-main); padding: 16px 24px; border-radius: var(--radius-sm); box-shadow: var(--shadow-float); font-family: 'JetBrains Mono', monospace; font-weight: 600; font-size: 14px; display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s ease; max-width: 350px; border: 1px solid var(--border-light); }
+    .toast.success { border-left-color: var(--brand-tele); }
+    .toast.error { border-left-color: var(--brand-red); }
+    .toast i { font-size: 18px; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+
+    .fab { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: var(--orange); color: var(--black-pure); border: none; border-radius: var(--radius-full); padding: 16px 32px; font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; box-shadow: var(--shadow-glow); cursor: pointer; z-index: 1000; text-transform: uppercase; display: flex; align-items: center; gap: 10px; transition: var(--transition); }
+    .fab:hover { transform: translate(-50%, -4px); box-shadow: 0 15px 30px -5px var(--orange); }
+    .fab.success { background: var(--text-main); color: var(--bg-body); box-shadow: var(--shadow-float); }
+    .fab.loading { opacity: 0.8; pointer-events: none; }
+
+    @media (max-width: 900px) { .robot-map-container { grid-template-columns: 1fr; gap: 16px; } .robot-center { display: none; } }
+    @media (max-width: 768px) {
+      .topbar { flex-direction: column; gap: 16px; padding: 16px; } .nav-tabs { width: 100%; display: flex; } .nav-tab { flex: 1; text-align: center; }
+      .grid-2 { grid-template-columns: 1fr; } .col-span-2 { grid-column: span 1; } .data-grid { grid-template-columns: 1fr; }
+      .timeline { padding-left: 20px; } .timeline::before { left: 4px; } .timeline-dot { left: -21px; width: 10px; height: 10px; }
+      .telemetry-group { flex-direction: column; } .telemetry-col { border-right: none; border-bottom: 1px solid var(--border-light); } .telemetry-col:last-child { border-bottom: none; }
+      .charts-grid { grid-template-columns: 1fr; }
+      .toast-container { left: 24px; right: 24px; } .toast { max-width: none; }
+    }
+  </style>
+</head>
+<body class="">
+
+  <header class="topbar">
+    <div class="logo-container">
+      <h1>MetalLAB</h1>
+      <span class="badge-decode">DECODE_OS</span>
+    </div>
+    
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-target-tab="match">Match Tracker</button>
+      <button class="nav-tab" data-target-tab="eng">DevOps Log</button>
+      <button class="nav-tab" data-target-tab="robot">Blueprint</button>
+      <button class="nav-tab" data-target-tab="compare">Compare</button>
+      <button class="nav-tab" data-target-tab="charts">Analytics</button>
+      <button class="nav-tab" data-target-tab="help">Ajuda</button>
+    </div>
+
+    <button class="theme-btn" id="themeToggle">
+      <i class="fas fa-moon"></i>
+      <i class="fas fa-sun"></i>
+    </button>
+  </header>
+
+  <main class="container">
+
+    <!-- ========== MATCH TRACKER ========== -->
+    <section id="sec-match" class="section active">
+      <div class="hud-grid">
+        <div class="hud-card accent"><span class="hud-lbl">Pts Totais</span><span class="hud-val" id="hudTotal">0</span></div>
+        <div class="hud-card"><span class="hud-lbl">Autônomo</span><span class="hud-val" id="hudAuto">0</span></div>
+        <div class="hud-card"><span class="hud-lbl">Tele-op</span><span class="hud-val" id="hudTele">0</span></div>
+        <div class="hud-card danger"><span class="hud-lbl" style="color:var(--brand-red)">Fouls (Penalidades)</span><span class="hud-val" id="hudFouls" style="color:var(--brand-red)">0</span></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="fg">
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-microchip"></i> Setup da Partida</span></div>
+            <div class="fg" style="margin-bottom: 16px;">
+              <label>Configuração do Robô / Build</label>
+              <select id="matchMec"><option value="">A carregar versões do robô...</option></select>
+            </div>
+            <div class="grid-2">
+              <div class="fg"><label>Pilotos</label><input type="text" id="pilotos" placeholder="Nomes"></div>
+              <div class="fg"><label>Meta (Target Pts)</label><input type="number" id="pontEsperada" value="100"></div>
+              <div class="fg col-span-2"><label>Eficiência Calculada</label><span id="hudEfic" style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 700;">0%</span></div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><span class="panel-title"><i class="fas fa-robot"></i> Autônomo</span></div>
+            <div class="fg" style="margin-bottom: 20px;">
+              <label>Saiu da Linha (LEAVE) [3pt]</label>
+              <div class="segmented" id="sg-autoLeave">
+                <button class="seg-btn active seg-option" data-target="autoLeave" data-val="0" title="Não saiu da linha">Não</button>
+                <button class="seg-btn seg-option" data-target="autoLeave" data-val="3" data-orange="true" title="Saiu da linha (+3 pts)">Sim (+3)</button>
+                <input type="hidden" id="autoLeave" value="0">
+              </div>
+            </div>
+            <div class="grid-2" style="gap: 16px;">
+              <div class="fg"><label>Classified [x3]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="autoClass" data-delta="-1" title="Diminuir Classified">-</button><span class="c-val" id="val-autoClass">0</span><button class="c-btn counter-btn" data-target="autoClass" data-delta="1" title="Aumentar Classified">+</button><input type="hidden" id="autoClass" value="0"></div></div>
+              <div class="fg"><label>Overflow [x1]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="autoOver" data-delta="-1" title="Diminuir Overflow">-</button><span class="c-val" id="val-autoOver">0</span><button class="c-btn counter-btn" data-target="autoOver" data-delta="1" title="Aumentar Overflow">+</button><input type="hidden" id="autoOver" value="0"></div></div>
+            </div>
+            <div class="fg" style="margin-top: 16px;"><label>Pattern Match [x2]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="autoPat" data-delta="-1" title="Diminuir Pattern">-</button><span class="c-val" id="val-autoPat">0</span><button class="c-btn counter-btn" data-target="autoPat" data-delta="1" title="Aumentar Pattern">+</button><input type="hidden" id="autoPat" value="0"></div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title"><i class="fas fa-gamepad"></i> Tele-Op & EndGame</span></div>
+          <div class="grid-2" style="gap: 16px; margin-bottom: 20px;">
+            <div class="fg"><label>Classified [x3]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="teleClass" data-delta="-1" title="Diminuir Classified">-</button><span class="c-val" id="val-teleClass">0</span><button class="c-btn counter-btn" data-target="teleClass" data-delta="1" title="Aumentar Classified">+</button><input type="hidden" id="teleClass" value="0"></div></div>
+            <div class="fg"><label>Overflow [x1]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="teleOver" data-delta="-1" title="Diminuir Overflow">-</button><span class="c-val" id="val-teleOver">0</span><button class="c-btn counter-btn" data-target="teleOver" data-delta="1" title="Aumentar Overflow">+</button><input type="hidden" id="teleOver" value="0"></div></div>
+            <div class="fg"><label>No Depot [x1]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="teleDepot" data-delta="-1" title="Diminuir No Depot">-</button><span class="c-val" id="val-teleDepot">0</span><button class="c-btn counter-btn" data-target="teleDepot" data-delta="1" title="Aumentar No Depot">+</button><input type="hidden" id="teleDepot" value="0"></div></div>
+            <div class="fg"><label>Pattern Match [x2]</label><div class="counter-widget"><button class="c-btn counter-btn" data-target="telePat" data-delta="-1" title="Diminuir Pattern">-</button><span class="c-val" id="val-telePat">0</span><button class="c-btn counter-btn" data-target="telePat" data-delta="1" title="Aumentar Pattern">+</button><input type="hidden" id="telePat" value="0"></div></div>
+          </div>
+          <div class="fg" style="margin-bottom: 20px;">
+            <label>Estacionamento na BASE</label>
+            <div class="segmented" id="sg-teleBase">
+              <button class="seg-btn active seg-option" data-target="teleBase" data-val="0" title="Nenhum estacionamento">Nenhum</button>
+              <button class="seg-btn seg-option" data-target="teleBase" data-val="5" data-orange="true" title="Parcial (+5 pts)">Parcial (+5)</button>
+              <button class="seg-btn seg-option" data-target="teleBase" data-val="10" data-orange="true" title="Total (+10 pts)">Total (+10)</button>
+              <input type="hidden" id="teleBase" value="0">
+            </div>
+          </div>
+          <div class="fg" style="margin-bottom: 24px;">
+            <label>Bónus 2 Robôs na Base [10pt]</label>
+            <div class="segmented" id="sg-teleDouble">
+              <button class="seg-btn active seg-option" data-target="teleDouble" data-val="0" title="Sem bónus">Não</button>
+              <button class="seg-btn seg-option" data-target="teleDouble" data-val="10" data-orange="true" title="Bónus (+10 pts)">Sim (+10)</button>
+              <input type="hidden" id="teleDouble" value="0">
+            </div>
+          </div>
+          
+          <div class="panel-header" style="margin-top: 30px; border-top: 1px solid var(--border-light); padding-top: 20px;"><span class="panel-title" style="color:var(--brand-red)"><i class="fas fa-exclamation-triangle"></i> Penalidades (Fouls)</span></div>
+          <div class="grid-2" style="gap: 16px; margin-bottom: 20px;">
+            <div class="fg"><label>Minor Fouls [x10 Pts p/ Oponente]</label><div class="counter-widget"><button class="c-btn danger counter-btn" data-target="foulMinor" data-delta="-1" title="Diminuir Minor Fouls">-</button><span class="c-val" id="val-foulMinor" style="color:var(--brand-red)">0</span><button class="c-btn danger counter-btn" data-target="foulMinor" data-delta="1" title="Aumentar Minor Fouls">+</button><input type="hidden" id="foulMinor" value="0"></div></div>
+            <div class="fg"><label>Major Fouls [x30 Pts p/ Oponente]</label><div class="counter-widget"><button class="c-btn danger counter-btn" data-target="foulMajor" data-delta="-1" title="Diminuir Major Fouls">-</button><span class="c-val" id="val-foulMajor" style="color:var(--brand-red)">0</span><button class="c-btn danger counter-btn" data-target="foulMajor" data-delta="1" title="Aumentar Major Fouls">+</button><input type="hidden" id="foulMajor" value="0"></div></div>
+          </div>
+
+          <div class="fg" style="border-top: 1px solid var(--border-light); padding-top: 20px;">
+            <label>Diagnóstico da Partida</label>
+            <div class="tag-cloud" id="grp-problemas">
+              <button class="tag active-orange tag-problem" data-exclusive="true" title="Partida sem incidentes">Partida Limpa</button>
+              <button class="tag tag-problem" title="Falha mecânica">Falha Mecânica</button>
+              <button class="tag tag-problem" title="Erro de código">Erro de Código</button>
+              <button class="tag tag-problem" title="Erro do piloto">Erro de Piloto</button>
+              <button class="tag tag-problem" title="Desconexão">Desconexão</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="fab" id="btnSaveMatch"><i class="fas fa-cloud-upload-alt"></i> Sincronizar Partida</button>
+    </section>
+
+    <!-- ========== DEVOPS LOG ========== -->
+    <section id="sec-eng" class="section">
+      <div class="panel" id="formEngenharia" style="border-left: 4px solid var(--orange); display: none;">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-terminal"></i> Novo Commit de Engenharia</div>
+          <button class="theme-btn" id="btnCloseEngForm"><i class="fas fa-times"></i></button>
+        </div>
+        
+        <div class="grid-2">
+          <div class="fg">
+            <label>Sub-Sistema (Módulo) <span style="color:var(--orange)">*</span></label>
+            <select id="engSys">
+              <option value="MEC_INT">MEC - Intake/Garra</option>
+              <option value="MEC_ELE">MEC - Elevador/Braço</option>
+              <option value="DRV">DRV - Chassi/Drivetrain</option>
+              <option value="SEN">SEN - Sensores/Visão</option>
+              <option value="SW">SW - Software/Código</option>
+              <option value="STR">STR - Estratégia</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Versão / Sprint (Ex: v2.1) <span style="color:var(--orange)">*</span></label>
+            <input type="text" id="engVer" placeholder="v1.0">
+          </div>
+          <div class="fg col-span-2">
+            <label>Título do Ticket / Modificação <span style="color:var(--orange)">*</span></label>
+            <input type="text" id="engTitulo" placeholder="Ex: Substituição das rodas mecanum por omni">
+          </div>
+
+          <div class="fg col-span-2" style="margin-top: 16px;">
+            <label style="color: var(--orange);"><i class="fas fa-chart-line"></i> Telemetria & KPIs (Delta)</label>
+            <div class="telemetry-group">
+              <div class="telemetry-col" style="flex: 1.5;">
+                <div class="tele-lbl">Métrica Avaliada</div>
+                <input type="text" id="kpiName" class="tele-val" placeholder="Ex: Tempo de Ciclo" style="font-size: 14px; font-family: 'Inter'; font-weight: 500;">
+              </div>
+              <div class="telemetry-col">
+                <div class="tele-lbl">Valor Antigo</div>
+                <input type="number" id="kpiOld" class="tele-val kpi-input" placeholder="0.0" step="0.1">
+              </div>
+              <div class="telemetry-col">
+                <div class="tele-lbl">Valor Novo</div>
+                <input type="number" id="kpiNew" class="tele-val kpi-input" placeholder="0.0" step="0.1">
+              </div>
+              <div class="telemetry-col">
+                <div class="tele-lbl">Evolução (Δ)</div>
+                <input type="text" id="kpiDelta" class="tele-val" placeholder="0.0" readonly tabindex="-1">
+              </div>
+            </div>
+          </div>
+
+          <div class="fg col-span-2" style="margin-top: 16px;">
+            <label><i class="fas fa-flask text-muted"></i> Hipótese / Levantamento de Requisitos</label>
+            <textarea id="engHyp" placeholder="Qual era o problema? O que precisava de resolver?"></textarea>
+          </div>
+
+          <div class="fg col-span-2">
+            <label><i class="fas fa-balance-scale text-muted"></i> Solução Aplicada & Trade-offs</label>
+            <textarea id="engTrade" placeholder="O que desenhou/programou? O que sacrificou (ex: ganhamos velocidade, perdemos força)?"></textarea>
+          </div>
+
+          <div class="fg col-span-2">
+            <label><i class="fas fa-search-plus text-muted"></i> Root Cause Analysis (RCA) / Resultados</label>
+            <textarea id="engRca" placeholder="Funcionou? O que aprendemos para a próxima versão?"></textarea>
+          </div>
+
+          <div class="fg col-span-2">
+            <label><i class="fas fa-link text-muted"></i> Link Externo (Opcional)</label>
+            <input type="url" id="engLink" placeholder="URL do GitHub, Onshape, Documento...">
+          </div>
+
+          <div class="grid-2 col-span-2">
+            <div class="fg">
+              <label>Status do Ticket</label>
+              <select id="engStatus">
+                <option value="Em Prototipagem">Em Prototipagem</option>
+                <option value="Validado em Teste">Validado em Teste</option>
+                <option value="Deployed (Competição)">Deployed (Competição)</option>
+                <option value="Falhou / Rejeitado">Falhou / Rejeitado</option>
+              </select>
+            </div>
+            <div class="fg">
+              <label>Custo do Módulo (R$ / €) <i class="fas fa-coins text-muted"></i></label>
+              <input type="number" id="engCost" placeholder="Para o BOM">
+            </div>
+          </div>
+
+          <div class="fg col-span-2" style="margin-top: 16px;">
+            <button class="nav-tab active" id="btnSaveEng" style="background:var(--text-main); color:var(--bg-body); padding:14px; font-weight: 700; width: 100%; border-radius: 8px; font-family: 'JetBrains Mono';">
+              <i class="fas fa-code-commit"></i> ENVIAR PARA A NUVEM
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px;">
+        <h2 style="font-size: 20px; font-weight: 700; display:flex; align-items:center; gap:10px; text-transform: uppercase;">
+          <i class="fas fa-server"></i> Engineering DB
+        </h2>
+        <button class="nav-tab active" id="btnOpenEngForm" style="border:1px solid var(--border-focus); background: var(--bg-surface); color: var(--text-main);"><i class="fas fa-plus"></i> Novo Commit</button>
+      </div>
+
+      <div id="engFeed" class="timeline">
+        <div class="panel" id="emptyEng" style="text-align: center; padding: 60px 20px; background: transparent; border: 2px dashed var(--border-light); box-shadow: none;">
+          <i class="fas fa-spinner fa-spin" style="font-size: 40px; margin-bottom: 16px; color: var(--orange);"></i>
+          <h3 style="color:var(--text-main); margin-bottom:8px; font-size: 16px;">A conectar à Base de Dados...</h3>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== BLUEPRINT ========== -->
+    <section id="sec-robot" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title"><i class="fas fa-cubes"></i> Bill of Materials & Configuração</div>
+          <button class="nav-tab active" id="btnAutoFillBlueprint" style="border:1px solid var(--border-focus); background: var(--bg-surface); color: var(--text-main);"><i class="fas fa-sync-alt"></i> Puxar Dados da Nuvem</button>
+        </div>
+
+        <div class="grid-2" style="max-width: 500px; margin: 0 auto 30px auto;">
+          <div class="fg">
+            <label style="text-align: center; justify-content: center;">Nome do Robô</label>
+            <input type="text" id="robotName" placeholder="Ex: Titan" style="text-align: center; font-size: 18px; font-weight: 700; border-color: var(--orange);">
+          </div>
+          <div class="fg">
+            <label style="text-align: center; justify-content: center;">Versão</label>
+            <input type="text" id="robotVersion" placeholder="Ex: v2.0" style="text-align: center; font-size: 18px; font-weight: 700; border-color: var(--orange);">
+          </div>
+        </div>
+
+        <div class="robot-map-container">
+          
+          <div class="fg" style="gap: 40px;">
+            <div class="blueprint-card">
+              <div class="blueprint-header">DRV - Chassi</div>
+              <div class="blueprint-body bp-input-group">
+                <input type="text" id="bp-drv" class="blueprint-input bp-ver" placeholder="Automático">
+                <input type="number" id="bp-drv-cost" class="blueprint-input bp-cost bp-cost-input" placeholder="$">
+              </div>
+            </div>
+            <div class="blueprint-card">
+              <div class="blueprint-header">SEN - Sensores</div>
+              <div class="blueprint-body bp-input-group">
+                <input type="text" id="bp-sen" class="blueprint-input bp-ver" placeholder="Automático">
+                <input type="number" id="bp-sen-cost" class="blueprint-input bp-cost bp-cost-input" placeholder="$">
+              </div>
+            </div>
+          </div>
+
+          <div class="robot-center">
+            <img src="Versão.svg" alt="Robô CAD" class="robot-image" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Robot_icon.svg/200px-Robot_icon.svg.png'; this.style.opacity='0.2';">
+            
+            <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--orange); margin-top: 10px; width: 100%;">
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px;">Custo Total (BOM)</div>
+              <div style="font-family: 'JetBrains Mono'; font-size: 24px; font-weight: 700; color: var(--orange);" id="bomTotal">0.00</div>
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 10px; width: 100%;">
+              <div class="fg" style="flex:1;">
+                <label style="font-size:10px; text-transform:none;">Peso (Máx 19kg)</label>
+                <input type="number" id="robotWeight" placeholder="kg" class="blueprint-input" style="border: 1px solid var(--border-light); font-size: 14px;">
+              </div>
+              <div class="fg" style="flex:1;">
+                <label style="font-size:10px; text-transform:none;">Sizing (18"x18")</label>
+                <button class="seg-btn" id="btnSize" style="height: 100%; border: 1px solid var(--border-light);" title="Clique para marcar como aprovado">Aprovado <i class="fas fa-check"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="fg" style="gap: 40px;">
+            <div class="blueprint-card">
+              <div class="blueprint-header">MEC - Intake/Garra</div>
+              <div class="blueprint-body bp-input-group">
+                <input type="text" id="bp-mec1" class="blueprint-input bp-ver" placeholder="Automático">
+                <input type="number" id="bp-mec1-cost" class="blueprint-input bp-cost bp-cost-input" placeholder="$">
+              </div>
+            </div>
+            <div class="blueprint-card">
+              <div class="blueprint-header">MEC - Elevador</div>
+              <div class="blueprint-body bp-input-group">
+                <input type="text" id="bp-mec2" class="blueprint-input bp-ver" placeholder="Automático">
+                <input type="number" id="bp-mec2-cost" class="blueprint-input bp-cost bp-cost-input" placeholder="$">
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="blueprint-card" style="max-width: 400px; margin: 40px auto 0 auto;">
+          <div class="blueprint-header" style="background: var(--text-main); color: var(--white-pure);">SW - Software / Código</div>
+          <div class="blueprint-body"><input type="text" id="bp-sw" class="blueprint-input" placeholder="Tag do Commit (ex: v1.9.4)" style="text-align: center;"></div>
+        </div>
+
+      </div>
+
+      <button class="fab" id="btnSaveBlueprint"><i class="fas fa-save"></i> Atualizar Blueprint</button>
+    </section>
+
+    <!-- ========== COMPARE ========== -->
+    <section id="sec-compare" class="section">
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title"><i class="fas fa-not-equal"></i> Análise Comparativa de Versões</span></div>
+        <div class="grid-2">
+            <div class="fg">
+              <label>Robô / Blueprint A</label>
+              <select id="compA"><option value="">Selecione um Blueprint...</option></select>
+            </div>
+            <div class="fg">
+              <label>Robô / Blueprint B</label>
+              <select id="compB"><option value="">Selecione um Blueprint...</option></select>
+            </div>
+        </div>
+        
+        <div id="compareResults" style="margin-top: 30px; overflow-x: auto;">
+           <p style="text-align:center; color:var(--text-muted); font-size: 14px; padding: 40px 0;">Selecione duas versões acima para comparar a evolução do robô.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== ANALYTICS ========== -->
+    <section id="sec-charts" class="section">
+      <div class="panel-header" style="margin-bottom: 24px; border: none; padding: 0;">
+        <h2 style="font-size: 20px; font-weight: 700; display:flex; align-items:center; gap:10px; text-transform: uppercase;">
+          <i class="fas fa-chart-pie" style="color:var(--orange);"></i> Real-Time Analytics
+        </h2>
+        <button class="nav-tab active" id="btnRefreshCharts" style="border:1px solid var(--border-focus); background: var(--bg-surface); color: var(--text-main);"><i class="fas fa-sync-alt"></i> Atualizar Dados</button>
+      </div>
+
+      <div class="hud-grid" style="margin-bottom: 24px;">
+        <div class="hud-card">
+          <span class="hud-lbl">Média Total</span>
+          <span class="hud-val" id="avgTotal">0</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-lbl">Melhor Partida</span>
+          <span class="hud-val" id="bestMatch">0</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-lbl">Consistência (CV)</span>
+          <span class="hud-val" id="consistencyCV">--%</span>
+          <span style="font-size:11px; color: var(--text-muted);">Menor é melhor</span>
+        </div>
+        <div class="hud-card">
+          <span class="hud-lbl">Fiabilidade</span>
+          <span class="hud-val" id="reliabilityRate">--%</span>
+          <span style="font-size:11px; color: var(--text-muted);">Partidas limpas</span>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-card col-span-2">
+          <h3>📈 Histórico de Pontuação (Últimas Partidas)</h3>
+          <div class="chart-wrapper">
+            <canvas id="scoreHistoryChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <h3>📊 Média Auto vs Tele-op</h3>
+          <div class="chart-wrapper">
+            <canvas id="avgDistributionChart"></canvas>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <h3>🎯 Eficiência Global vs Meta</h3>
+          <div class="chart-wrapper">
+            <canvas id="efficiencyGaugeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>🚨 Análise de Falhas (Problemas Reportados)</h3>
+          <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 10px;">Frequência de problemas nas partidas</p>
+          <div class="chart-wrapper" id="failuresWrapper">
+            <canvas id="failuresChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>⚙️ Distribuição de Esforço (DevOps)</h3>
+          <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 10px;">Commits registados por Subsistema</p>
+          <div class="chart-wrapper">
+            <canvas id="devOpsEffortChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>🕸️ Perfil de Desempenho do Robô</h3>
+          <p style="font-size: 11px; color: var(--text-muted); text-align: center; margin-bottom: 10px;">Com base nas médias e consistência</p>
+          <div class="chart-wrapper">
+            <canvas id="robotProfileRadarChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>📈 Correlação Auto vs Total</h3>
+          <div class="chart-wrapper">
+            <canvas id="scatterAutoTotalChart"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3>🥧 Contribuição por Ação (Média)</h3>
+          <div class="chart-wrapper">
+            <canvas id="contributionPieChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top: 32px;">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-list"></i> Partidas Registadas</span>
+          <span style="font-size:12px; color: var(--text-muted);">Clique no ícone para excluir</span>
+        </div>
+        <div class="matches-table-container">
+          <table class="matches-table" id="matchesTable">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Pilotos</th>
+                <th>Config</th>
+                <th>Auto</th>
+                <th>Tele</th>
+                <th>Total</th>
+                <th>Fouls</th>
+                <th>Efic.</th>
+                <th>Problemas</th>
+                <th style="width:40px;"></th>
+              </tr>
+            </thead>
+            <tbody id="matchesTableBody">
+              <tr><td colspan="10" style="text-align:center; padding: 30px;">A carregar partidas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== AJUDA ========== -->
+    <section id="sec-help" class="section">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fas fa-question-circle"></i> Central de Ajuda & Guia Rápido</span>
+        </div>
+        <p style="margin-bottom: 32px; color: var(--text-muted); font-size: 16px;">Bem-vindo ao Mission Control da MetalLAB. Esta ferramenta foi desenhada para gerir todo o ciclo de vida do robô: desde o tracking de partidas até à engenharia e análise de desempenho.</p>
+        
+        <div class="help-grid">
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-gamepad"></i></div>
+            <h3>Match Tracker</h3>
+            <p>Registe os pontos de cada partida em tempo real.</p>
+            <ul>
+              <li><i class="fas fa-check-circle"></i> Use os contadores +/- para ações (Classified, Overflow, etc.)</li>
+              <li><i class="fas fa-check-circle"></i> Selecione a configuração do robô no dropdown (puxado dos Blueprints).</li>
+              <li><i class="fas fa-check-circle"></i> Marque os problemas ocorridos para análise posterior.</li>
+              <li><i class="fas fa-check-circle"></i> Clique em <strong>Sincronizar Partida</strong> para guardar na nuvem.</li>
+            </ul>
+            <div class="help-tip">
+              <i class="fas fa-lightbulb"></i> <strong>Dica:</strong> A eficiência é calculada automaticamente com base na meta definida.
+            </div>
+          </div>
+          
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-code-branch"></i></div>
+            <h3>DevOps Log</h3>
+            <p>Documente todas as alterações de hardware e software.</p>
+            <ul>
+              <li><i class="fas fa-check-circle"></i> Cada ticket deve ter um subsistema, versão e título.</li>
+              <li><i class="fas fa-check-circle"></i> Preencha a telemetria (KPI antes/depois) para medir o impacto.</li>
+              <li><i class="fas fa-check-circle"></i> Descreva a hipótese, solução e resultados (RCA).</li>
+              <li><i class="fas fa-check-circle"></i> O custo inserido alimenta automaticamente o BOM do Blueprint.</li>
+            </ul>
+            <div class="help-tip">
+              <i class="fas fa-lightbulb"></i> <strong>Dica:</strong> Use o botão "Puxar Dados da Nuvem" no Blueprint para importar as últimas versões.
+            </div>
+          </div>
+          
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-cubes"></i></div>
+            <h3>Blueprint & BOM</h3>
+            <p>Visualize e atualize a configuração atual do robô.</p>
+            <ul>
+              <li><i class="fas fa-check-circle"></i> Preencha o nome e versão no topo.</li>
+              <li><i class="fas fa-check-circle"></i> Os campos de cada subsistema podem ser preenchidos manualmente ou via botão "Puxar Dados".</li>
+              <li><i class="fas fa-check-circle"></i> O custo total é calculado automaticamente.</li>
+              <li><i class="fas fa-check-circle"></i> Guarde o Blueprint para criar uma nova versão comparável.</li>
+            </ul>
+          </div>
+          
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-not-equal"></i></div>
+            <h3>Comparar Versões</h3>
+            <p>Analise a evolução entre dois Blueprints guardados.</p>
+            <ul>
+              <li><i class="fas fa-check-circle"></i> Selecione duas versões nos dropdowns.</li>
+              <li><i class="fas fa-check-circle"></i> A tabela destaca diferenças: <span style="color: var(--brand-tele);">verde</span> para melhoria, <span style="color: var(--brand-red);">vermelho</span> para piora.</li>
+              <li><i class="fas fa-check-circle"></i> Use para justificar alterações de design.</li>
+            </ul>
+          </div>
+          
+          <div class="help-card">
+            <div class="help-icon"><i class="fas fa-chart-line"></i></div>
+            <h3>Analytics</h3>
+            <p>Visualize o desempenho da equipa com gráficos interativos.</p>
+            <ul>
+              <li><i class="fas fa-check-circle"></i> O histórico mostra a evolução da pontuação com média móvel.</li>
+              <li><i class="fas fa-check-circle"></i> Gráficos de dispersão e pizza detalham a contribuição de cada ação.</li>
+              <li><i class="fas fa-check-circle"></i> A tabela de partidas permite excluir registos errados.</li>
+              <li><i class="fas fa-check-circle"></i> Use o botão "Atualizar Dados" para recarregar os gráficos.</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div style="margin-top: 48px;">
+          <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 10px;"><i class="fas fa-question-circle" style="color: var(--orange);"></i> Perguntas Frequentes (FAQ)</h3>
+          <div class="grid-2" style="gap: 32px;">
+            <div>
+              <div class="faq-item">
+                <h4>Como corrijo uma partida registada com erro?</h4>
+                <p>Na aba <strong>Analytics</strong>, localize a partida na tabela e clique no ícone de lixeira para excluí-la. Depois, regresse ao Match Tracker e registe novamente.</p>
+              </div>
+              <div class="faq-item">
+                <h4>O que significa "Consistência (CV)"?</h4>
+                <p>É o Coeficiente de Variação (desvio padrão / média). Quanto menor o valor, mais consistente é o desempenho do robô. Valores abaixo de 20% são considerados bons.</p>
+              </div>
+              <div class="faq-item">
+                <h4>Posso usar a ferramenta offline?</h4>
+                <p>Sim, os dados são guardados localmente durante a sessão e sincronizados com o Firebase assim que houver conexão. As alterações aparecerão em todos os dispositivos ligados à mesma conta Firebase.</p>
+              </div>
+            </div>
+            <div>
+              <div class="faq-item">
+                <h4>Como funciona o preenchimento automático do Blueprint?</h4>
+                <p>O botão "Puxar Dados da Nuvem" procura os commits mais recentes no DevOps Log para cada subsistema (DRV, SEN, MEC_INT, etc.) e preenche a versão e o custo associado.</p>
+              </div>
+              <div class="faq-item">
+                <h4>Por que os gráficos não aparecem?</h4>
+                <p>Certifique-se de que existem partidas registadas. Se ainda assim não aparecerem, clique em "Atualizar Dados" na aba Analytics ou mude de tema (claro/escuro) para forçar a renderização.</p>
+              </div>
+              <div class="faq-item">
+                <h4>Como mudo o tema para escuro?</h4>
+                <p>Clique no ícone de lua/sol no canto superior direito. A preferência é guardada automaticamente.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Container para Toasts -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script type="module">
+    // ========== JAVASCRIPT COMPLETO ==========
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6ynxAi14VHRWTro2Rm3VQAQS9rn2CtmE",
+      authDomain: "ftc-docs-9e948.firebaseapp.com",
+      projectId: "ftc-docs-9e948",
+      storageBucket: "ftc-docs-9e948.firebasestorage.app",
+      messagingSenderId: "777609360371",
+      appId: "1:777609360371:web:e0176d762d5c68055b5886",
+      measurementId: "G-59T3XMN0Y2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let engLogsData = [];
+    let blueprintsData = []; 
+    let matchesData = []; 
+    let chartsInstances = {}; 
+    let tagsProblemas = ['Partida Limpa'];
+    let robotVersionsArray = ["v1.0 - Base Build"];
+    let formEngOpen = false;
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      let icon = 'check-circle';
+      if (type === 'error') icon = 'exclamation-circle';
+      else if (type === 'warning') icon = 'exclamation-triangle';
+      toast.innerHTML = `<i class="fas fa-${icon}"></i> ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Tema
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark-theme');
+      document.body.classList.toggle('dark-theme');
+      localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+      if(document.getElementById('sec-charts').classList.contains('active')) refreshCharts(); 
+    });
+
+    // Navegação
+    const switchTab = (tabId) => {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+      
+      const activeSection = document.getElementById('sec-' + tabId);
+      if(activeSection) activeSection.classList.add('active');
+      
+      const activeTabBtn = document.querySelector(`.nav-tab[data-target-tab="${tabId}"]`);
+      if(activeTabBtn) activeTabBtn.classList.add('active');
+
+      document.getElementById('btnSaveMatch').style.display = 'none';
+      document.getElementById('btnSaveBlueprint').style.display = 'none';
+
+      if(tabId === 'match') {
+          document.getElementById('btnSaveMatch').style.display = 'flex';
+      } else if (tabId === 'robot') {
+          document.getElementById('btnSaveBlueprint').style.display = 'flex';
+      } else if (tabId === 'charts') {
+          setTimeout(refreshCharts, 100); 
+      } else if (tabId === 'compare') {
+          renderCompare();
+      }
+    };
+
+    document.querySelectorAll('.nav-tab[data-target-tab]').forEach(btn => {
+      btn.addEventListener('click', (e) => switchTab(e.target.getAttribute('data-target-tab')));
+    });
+
+    const updateMatchDropdown = () => {
+      const select = document.getElementById('matchMec');
+      const currentVal = select.value;
+      select.innerHTML = '<option value="">Selecione uma versão guardada...</option>';
+      [...new Set(robotVersionsArray)].forEach(v => {
+        if(v) { const option = document.createElement('option'); option.value = v; option.text = v; select.appendChild(option); }
+      });
+      if(currentVal && robotVersionsArray.includes(currentVal)) select.value = currentVal;
+    };
+
+    // Match Tracker
+    const calcMatchScore = () => {
+      const getM = id => parseInt(document.getElementById(id).value) || 0;
+      const auto = getM('autoLeave') + (getM('autoClass') * 3) + (getM('autoOver') * 1) + (getM('autoPat') * 2);
+      const tele = (getM('teleClass') * 3) + (getM('teleOver') * 1) + (getM('teleDepot') * 1) + (getM('telePat') * 2) + getM('teleBase') + getM('teleDouble');
+      const fouls = (getM('foulMinor') * 10) + (getM('foulMajor') * 30);
+      const total = auto + tele;
+
+      document.getElementById('hudTotal').innerText = total;
+      document.getElementById('hudAuto').innerText = auto;
+      document.getElementById('hudTele').innerText = tele;
+      document.getElementById('hudFouls').innerText = "-" + fouls;
+      
+      const max = parseInt(document.getElementById('pontEsperada').value) || 100;
+      const efic = max > 0 ? Math.round((total/max)*100) : 0;
+      const elEfic = document.getElementById('hudEfic');
+      elEfic.innerText = efic + '%';
+      
+      if(efic >= 100) elEfic.style.color = 'var(--orange)';
+      else if(efic >= 50) elEfic.style.color = 'var(--text-main)';
+      else elEfic.style.color = 'var(--text-muted)';
+    };
+
+    document.getElementById('pontEsperada').addEventListener('input', calcMatchScore);
+
+    document.querySelectorAll('.counter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-target');
+        const delta = parseInt(btn.getAttribute('data-delta'));
+        const input = document.getElementById(targetId);
+        const display = document.getElementById('val-' + targetId);
+        
+        let val = parseInt(input.value) || 0; 
+        val += delta; 
+        if(val < 0) val = 0; 
+        
+        input.value = val; 
+        display.innerText = val; 
+        calcMatchScore();
+      });
+    });
+
+    document.querySelectorAll('.seg-option').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const group = btn.parentElement;
+        const targetId = btn.getAttribute('data-target');
+        const val = btn.getAttribute('data-val');
+        const isOrange = btn.getAttribute('data-orange') === 'true';
+
+        document.getElementById(targetId).value = val; 
+        
+        group.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active', 'active-orange')); 
+        if (isOrange && val > 0) btn.classList.add('active-orange'); 
+        else btn.classList.add('active'); 
+        
+        calcMatchScore();
+      });
+    });
+
+    document.querySelectorAll('.tag-problem').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const container = btn.parentElement;
+        const isExclusive = btn.getAttribute('data-exclusive') === 'true';
+        
+        if(isExclusive) { 
+          container.querySelectorAll('.tag').forEach(b => b.classList.remove('active', 'active-orange')); 
+          btn.classList.add('active-orange'); 
+          tagsProblemas = [btn.innerText]; 
+          return; 
+        }
+        
+        const btnLimpa = container.querySelector('.active-orange');
+        if(btnLimpa) { 
+          btnLimpa.classList.remove('active-orange'); 
+          tagsProblemas = []; 
+        }
+        
+        btn.classList.toggle('active'); 
+        const val = btn.innerText;
+        
+        if(btn.classList.contains('active')) {
+          tagsProblemas.push(val); 
+        } else { 
+          const idx = tagsProblemas.indexOf(val); 
+          if(idx > -1) tagsProblemas.splice(idx, 1); 
+        }
+      });
+    });
+
+    document.getElementById('btnSaveMatch').addEventListener('click', async () => {
+      const mec = document.getElementById('matchMec').value.trim();
+      if(!mec) { showToast('A Configuração do Robô é obrigatória!', 'error'); document.getElementById('matchMec').focus(); return; }
+
+      const btn = document.getElementById('btnSaveMatch');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A sincronizar...'; 
+      btn.classList.add('loading');
+
+      const details = {
+        autoLeave: parseInt(document.getElementById('autoLeave').value) || 0,
+        autoClass: parseInt(document.getElementById('autoClass').value) || 0,
+        autoOver: parseInt(document.getElementById('autoOver').value) || 0,
+        autoPat: parseInt(document.getElementById('autoPat').value) || 0,
+        teleClass: parseInt(document.getElementById('teleClass').value) || 0,
+        teleOver: parseInt(document.getElementById('teleOver').value) || 0,
+        teleDepot: parseInt(document.getElementById('teleDepot').value) || 0,
+        telePat: parseInt(document.getElementById('telePat').value) || 0,
+        teleBase: parseInt(document.getElementById('teleBase').value) || 0,
+        teleDouble: parseInt(document.getElementById('teleDouble').value) || 0,
+        foulMinor: parseInt(document.getElementById('foulMinor').value) || 0,
+        foulMajor: parseInt(document.getElementById('foulMajor').value) || 0
+      };
+
+      const matchData = {
+        pilotos: document.getElementById('pilotos').value,
+        mecanismo: mec, 
+        target: Number(document.getElementById('pontEsperada').value),
+        auto: Number(document.getElementById('hudAuto').innerText), 
+        tele: Number(document.getElementById('hudTele').innerText), 
+        total: Number(document.getElementById('hudTotal').innerText),
+        fouls: (details.foulMinor * 10) + (details.foulMajor * 30),
+        eficiencia: document.getElementById('hudEfic').innerText, 
+        problemas: tagsProblemas.length > 0 ? tagsProblemas.join(', ') : 'Limpa', 
+        timestamp: new Date(),
+        details: details
+      };
+
+      try {
+        await addDoc(collection(db, "partidas"), matchData);
+        btn.innerHTML = '<i class="fas fa-check"></i> Gravado na Cloud!'; 
+        btn.classList.remove('loading'); 
+        btn.classList.add('success');
+        showToast('Partida sincronizada com sucesso!', 'success');
+        
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sincronizar Partida'; 
+          btn.classList.remove('success');
+          
+          ['autoClass','autoOver','autoPat','teleClass','teleOver','teleDepot','telePat','foulMinor','foulMajor'].forEach(id => { 
+            document.getElementById(id).value = '0'; 
+            document.getElementById('val-'+id).innerText = '0'; 
+          });
+          ['autoLeave','teleBase','teleDouble'].forEach(id => { 
+            const p = document.getElementById('sg-'+id); 
+            p.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active', 'active-orange')); 
+            p.querySelector('.seg-btn').classList.add('active'); 
+            document.getElementById(id).value = '0'; 
+          });
+          
+          tagsProblemas = ['Partida Limpa']; 
+          document.querySelectorAll('#grp-problemas .tag').forEach(b => b.classList.remove('active', 'active-orange')); 
+          document.querySelector('#grp-problemas .tag[data-exclusive="true"]').classList.add('active-orange');
+          
+          calcMatchScore(); 
+          window.scrollTo(0,0);
+          if(document.getElementById('sec-charts').classList.contains('active')) setTimeout(refreshCharts, 100);
+        }, 1500);
+      } catch (e) { 
+        console.error(e); 
+        showToast('Erro ao gravar na Nuvem.', 'error'); 
+        btn.innerHTML = '<i class="fas fa-times"></i> Erro'; 
+        btn.classList.remove('loading'); 
+      }
+    });
+
+    window.deleteMatch = async (docId) => {
+      if(!confirm("Excluir esta partida permanentemente?")) return;
+      try {
+        await deleteDoc(doc(db, "partidas", docId));
+        showToast('Partida excluída.', 'success');
+      } catch(e) {
+        console.error(e);
+        showToast('Erro ao excluir.', 'error');
+      }
+    };
+
+    // DevOps Log
+    const toggleEngForm = () => { 
+      formEngOpen = !formEngOpen; 
+      document.getElementById('formEngenharia').style.display = formEngOpen ? 'block' : 'none'; 
+    };
+    
+    document.getElementById('btnOpenEngForm').addEventListener('click', toggleEngForm);
+    document.getElementById('btnCloseEngForm').addEventListener('click', toggleEngForm);
+
+    const calcDelta = () => {
+      const oldV = parseFloat(document.getElementById('kpiOld').value) || 0; 
+      const newV = parseFloat(document.getElementById('kpiNew').value) || 0; 
+      const deltaInput = document.getElementById('kpiDelta');
+      
+      if (oldV === 0 && newV === 0) { deltaInput.value = ''; deltaInput.className = 'tele-val'; return; }
+      
+      const delta = (newV - oldV).toFixed(2); 
+      deltaInput.value = delta > 0 ? `+${delta}` : delta;
+      if (delta >= 0) { deltaInput.className = 'tele-val delta-pos'; } else { deltaInput.className = 'tele-val delta-neg'; }
+    };
+
+    document.querySelectorAll('.kpi-input').forEach(input => input.addEventListener('input', calcDelta));
+
+    document.getElementById('btnSaveEng').addEventListener('click', async () => {
+      const sys = document.getElementById('engSys').value; 
+      const ver = document.getElementById('engVer').value.trim();
+      const title = document.getElementById('engTitulo').value.trim();
+      
+      if(!ver || !title) { showToast('Versão e Título são obrigatórios!', 'error'); return; }
+
+      const entry = {
+        ticket: `${sys}-${Math.floor(Math.random()*1000).toString().padStart(3, '0')}`,
+        sys: sys, versao: ver, titulo: title, 
+        kpiNome: document.getElementById('kpiName').value || 'KPI', 
+        kpiOld: document.getElementById('kpiOld').value, 
+        kpiNew: document.getElementById('kpiNew').value, 
+        kpiDelta: document.getElementById('kpiDelta').value, 
+        hipotese: document.getElementById('engHyp').value.trim(), 
+        tradeoff: document.getElementById('engTrade').value.trim(), 
+        rca: document.getElementById('engRca').value.trim(), 
+        status: document.getElementById('engStatus').value, 
+        link: document.getElementById('engLink').value.trim(), 
+        custo: document.getElementById('engCost').value, 
+        timestamp: new Date(), 
+        dataStr: new Date().toLocaleDateString('pt-BR')
+      };
+
+      try {
+        await addDoc(collection(db, "engenharia"), entry);
+        showToast('Commit registado!', 'success');
+        ['engVer','engTitulo','kpiOld','kpiNew','kpiDelta','engHyp','engTrade','engRca','engLink','engCost'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('kpiDelta').className = 'tele-val';
+        toggleEngForm();
+        if(document.getElementById('sec-charts').classList.contains('active')) setTimeout(refreshCharts, 100);
+      } catch (e) { console.error(e); showToast('Erro ao gravar.', 'error'); }
+    });
+
+    const deleteEng = async (docId) => {
+      if(!confirm("Deletar este ticket permanentemente da nuvem?")) return;
+      try { await deleteDoc(doc(db, "engenharia", docId)); showToast('Ticket removido.', 'success'); } catch (e) { console.error(e); }
+    };
+
+    document.getElementById('engFeed').addEventListener('click', (e) => {
+      const btn = e.target.closest('.delete-eng-btn');
+      if(btn) deleteEng(btn.getAttribute('data-id'));
+    });
+
+    onSnapshot(collection(db, "engenharia"), (snapshot) => {
+      const feed = document.getElementById('engFeed');
+      if (snapshot.empty) {
+        engLogsData = [];
+        feed.innerHTML = `<div class="panel" id="emptyEng" style="text-align: center; padding: 60px 20px; background: transparent; border: 2px dashed var(--border-light); box-shadow: none;"><i class="fas fa-code-branch" style="font-size: 40px; margin-bottom: 16px; color: var(--border-focus);"></i><h3 style="color:var(--text-main); margin-bottom:8px; font-size: 16px;">Branch Vazia</h3><p style="color: var(--text-muted); font-size: 14px;">Não há versões documentadas na nuvem.</p></div>`;
+        return;
+      }
+
+      let logsArray = [];
+      snapshot.forEach((docItem) => { logsArray.push({ docId: docItem.id, ...docItem.data() }); });
+
+      logsArray.sort((a, b) => {
+        const timeA = a.timestamp && a.timestamp.toMillis ? a.timestamp.toMillis() : 0;
+        const timeB = b.timestamp && b.timestamp.toMillis ? b.timestamp.toMillis() : 0;
+        return timeB - timeA; 
+      });
+
+      engLogsData = logsArray; 
+      let html = '';
+      
+      logsArray.forEach((e) => {
+        const safeStatus = e.status || 'Documentado';
+        const safeTicket = e.ticket || 'SYS-000';
+        const safeDataStr = e.dataStr || 'Data Desconhecida';
+        
+        let badgeClass = 'status-failed'; let borderColor = 'var(--text-muted)';
+        if(safeStatus.includes('Prototipagem')) { badgeClass = 'status-testing'; borderColor = 'var(--brand-warn)'; }
+        else if(safeStatus.includes('Validado') || safeStatus.includes('Deployed')) { badgeClass = 'status-deployed'; borderColor = 'var(--brand-tele)'; }
+
+        html += `
+        <div class="ticket-entry" style="border-left-color: ${borderColor}">
+          <div class="ticket-header">
+            <div>
+              <span class="ticket-id"><i class="fas fa-ticket-alt"></i> ${safeTicket}</span>
+              <span style="font-family: 'JetBrains Mono'; font-weight:700; font-size:12px; margin-left: 10px; color: var(--orange);">${e.versao || 'v?'}</span>
+              <h3 class="ticket-title">${e.titulo || 'Sem Título'}</h3>
+              <div class="ticket-meta"><i class="far fa-clock"></i> Commit em ${safeDataStr} ${e.custo ? `| <i class="fas fa-coins" style="margin-left:8px;"></i> ${e.custo}` : ''}</div>
+            </div>
+            <button class="delete-eng-btn" data-id="${e.docId}" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 16px; transition: color 0.2s;"><i class="fas fa-trash"></i></button>
+          </div>
+          
+          ${e.kpiOld || e.kpiNew ? `
+          <div style="display:flex; gap:16px; margin-bottom:16px; overflow-x: auto; padding-bottom: 5px;">
+            <div style="background:var(--bg-input); padding:8px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-light); flex:1; min-width: 120px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${e.kpiNome || 'KPI'} (Antes)</span><span style="font-family:'JetBrains Mono'; font-weight:700; font-size:16px;">${e.kpiOld || '0'}</span>
+            </div>
+            <div style="background:var(--bg-input); padding:8px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-light); flex:1; min-width: 120px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${e.kpiNome || 'KPI'} (Depois)</span><span style="font-family:'JetBrains Mono'; font-weight:700; font-size:16px;">${e.kpiNew || '0'}</span>
+            </div>
+            <div style="background:var(--bg-input); padding:8px 16px; border-radius:var(--radius-sm); border:1px solid var(--border-light); flex:1; min-width: 120px; display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Evolução (Δ)</span><span style="font-family:'JetBrains Mono'; font-weight:700; font-size:16px;" class="${parseFloat(e.kpiDelta) >= 0 ? 'delta-pos' : 'delta-neg'}">${e.kpiDelta || '0'}</span>
+            </div>
+          </div>` : ''}
+
+          <div class="data-grid">
+            ${e.hipotese ? `<div class="data-block full"><h4><i class="fas fa-flask"></i> Hipótese / Problema</h4><p>${e.hipotese}</p></div>` : ''}
+            ${e.tradeoff ? `<div class="data-block"><h4><i class="fas fa-balance-scale"></i> Solução / Trade-off</h4><p>${e.tradeoff}</p></div>` : ''}
+            ${e.rca ? `<div class="data-block"><h4><i class="fas fa-search-plus"></i> RCA / Resultados</h4><p>${e.rca}</p></div>` : ''}
+            ${e.link ? `<div class="data-block full" style="padding: 12px 16px;"><a href="${e.link}" target="_blank" style="color:var(--brand-blue); text-decoration:none; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px;"><i class="fas fa-external-link-alt"></i> Acessar Repositório / CAD / Dados Externos</a></div>` : ''}
+          </div>
+        </div>`;
+      });
+
+      feed.innerHTML = html;
+    }, (error) => {
+      console.error("Erro ao ler dados:", error);
+      document.getElementById('engFeed').innerHTML = `<p style="color: var(--brand-red); text-align: center; padding: 20px; border: 1px solid var(--brand-red); border-radius: 8px; background: rgba(239, 68, 68, 0.1);"><strong>Erro de Ligação</strong></p>`;
+    });
+
+    // Blueprints
+    const updateCompareDropdowns = () => {
+      const compA = document.getElementById('compA');
+      const compB = document.getElementById('compB');
+      const valA = compA.value;
+      const valB = compB.value;
+
+      let options = '<option value="">Selecione um Blueprint...</option>';
+      blueprintsData.forEach(bp => {
+        if(bp.versaoGlobal) options += `<option value="${bp.versaoGlobal}">${bp.versaoGlobal}</option>`;
+      });
+
+      compA.innerHTML = options;
+      compB.innerHTML = options;
+
+      if(valA) compA.value = valA;
+      if(valB) compB.value = valB;
+    };
+
+    const renderCompare = () => {
+      const valA = document.getElementById('compA').value;
+      const valB = document.getElementById('compB').value;
+      const res = document.getElementById('compareResults');
+
+      if(!valA || !valB) {
+        res.innerHTML = '<p style="text-align:center; color:var(--text-muted); font-size: 14px; padding: 40px 0;">Selecione duas versões acima para comparar a evolução do robô.</p>';
+        return;
+      }
+
+      const bpA = blueprintsData.find(b => b.versaoGlobal === valA);
+      const bpB = blueprintsData.find(b => b.versaoGlobal === valB);
+
+      if(!bpA || !bpB) return;
+
+      const compareRow = (label, key, isNumeric = false) => {
+        let valDataA = bpA[key];
+        let valDataB = bpB[key];
+
+        if (typeof valDataA === 'boolean') valDataA = valDataA ? 'Sim' : 'Não';
+        if (typeof valDataB === 'boolean') valDataB = valDataB ? 'Sim' : 'Não';
+
+        let a = valDataA || '-';
+        let b = valDataB || '-';
+        let classA = '';
+        let classB = '';
+
+        if(a !== b) {
+            classA = 'comp-diff';
+            classB = 'comp-diff';
+            if(isNumeric) {
+                let numA = parseFloat(a) || 0;
+                let numB = parseFloat(b) || 0;
+                if(numA < numB) { classA = 'comp-better'; classB = 'comp-worse'; }
+                else if (numB < numA) { classB = 'comp-better'; classA = 'comp-worse'; }
+            }
+        }
+
+        return `<tr>
+          <th>${label}</th>
+          <td class="${classA}">${isNumeric && a !== '-' && key === 'custoTotal' ? 'R$ '+a : a}</td>
+          <td class="${classB}">${isNumeric && b !== '-' && key === 'custoTotal' ? 'R$ '+b : b}</td>
+        </tr>`;
+      };
+
+      res.innerHTML = `
+        <table class="comp-table">
+          <thead>
+            <tr><th>Atributo</th><th>${bpA.versaoGlobal}</th><th>${bpB.versaoGlobal}</th></tr>
+          </thead>
+          <tbody>
+            ${compareRow('Chassi (DRV)', 'drv')}
+            ${compareRow('Sensores (SEN)', 'sen')}
+            ${compareRow('Intake (MEC1)', 'mec1')}
+            ${compareRow('Elevador (MEC2)', 'mec2')}
+            ${compareRow('Software (SW)', 'sw')}
+            ${compareRow('Peso (kg)', 'peso', true)}
+            ${compareRow('Custo Total', 'custoTotal', true)}
+            ${compareRow('Sizing (18x18)', 'sizingAprovado')}
+          </tbody>
+        </table>
+      `;
+    };
+
+    document.getElementById('compA').addEventListener('change', renderCompare);
+    document.getElementById('compB').addEventListener('change', renderCompare);
+
+    onSnapshot(collection(db, "blueprints"), (snapshot) => {
+      robotVersionsArray = ["v1.0 - Base Build"]; 
+      blueprintsData = [];
+
+      snapshot.forEach((docItem) => {
+        const data = docItem.data();
+        blueprintsData.push(data);
+        if (data.versaoGlobal && !robotVersionsArray.includes(data.versaoGlobal)) {
+          robotVersionsArray.push(data.versaoGlobal);
+        }
+      });
+
+      updateMatchDropdown();
+      updateCompareDropdowns();
+      if(document.getElementById('sec-compare').classList.contains('active')) renderCompare();
+    });
+
+    // Partidas
+    const qMatches = query(collection(db, "partidas"), orderBy("timestamp", "desc"), limit(20));
+    onSnapshot(qMatches, (snap) => {
+      matchesData = [];
+      snap.forEach(doc => {
+        matchesData.push({ docId: doc.id, ...doc.data() });
+      });
+      matchesData.reverse();
+      
+      if(document.getElementById('sec-charts').classList.contains('active')) {
+        setTimeout(refreshCharts, 100);
+      }
+      renderMatchesTable();
+    });
+
+    function renderMatchesTable() {
+      const tbody = document.getElementById('matchesTableBody');
+      if (!tbody) return;
+      
+      if (matchesData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 30px;">Nenhuma partida registada.</td></tr>';
+        return;
+      }
+
+      let html = '';
+      matchesData.slice().reverse().forEach(m => {
+        const dataStr = m.timestamp ? new Date(m.timestamp.seconds * 1000).toLocaleDateString('pt-BR') : '-';
+        html += `<tr>
+          <td>${dataStr}</td>
+          <td>${m.pilotos || '-'}</td>
+          <td>${m.mecanismo || '-'}</td>
+          <td>${m.auto || 0}</td>
+          <td>${m.tele || 0}</td>
+          <td><strong>${m.total || 0}</strong></td>
+          <td style="color:var(--brand-red);">${m.fouls || 0}</td>
+          <td>${m.eficiencia || '-'}</td>
+          <td>${m.problemas || 'Limpa'}</td>
+          <td><button class="delete-match-btn" onclick="deleteMatch('${m.docId}')" title="Excluir partida"><i class="fas fa-trash-alt"></i></button></td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // Blueprint BOM
+    const calcTotalCost = () => {
+      const drv = parseFloat(document.getElementById('bp-drv-cost').value) || 0;
+      const sen = parseFloat(document.getElementById('bp-sen-cost').value) || 0;
+      const mec1 = parseFloat(document.getElementById('bp-mec1-cost').value) || 0;
+      const mec2 = parseFloat(document.getElementById('bp-mec2-cost').value) || 0;
+      const total = drv + sen + mec1 + mec2;
+      document.getElementById('bomTotal').innerText = total.toFixed(2);
+    };
+
+    document.querySelectorAll('.bp-cost-input').forEach(input => input.addEventListener('input', calcTotalCost));
+
+    document.getElementById('btnSize').addEventListener('click', function() {
+      this.classList.toggle('active-orange');
+    });
+
+    document.getElementById('btnAutoFillBlueprint').addEventListener('click', () => {
+      if(!engLogsData || engLogsData.length === 0) { showToast('Não existem versões registadas!', 'error'); return; }
+      
+      let latest = { 'DRV': {v:'', c:''}, 'SEN': {v:'', c:''}, 'MEC_INT': {v:'', c:''}, 'MEC_ELE': {v:'', c:''}, 'SW': {v:'', c:''} };
+
+      for (let log of engLogsData) {
+        let sys = log.ticket ? log.ticket.split('-')[0] : (log.sys || '');
+        if (sys === 'MEC') sys = 'MEC_INT'; 
+        if (latest[sys] !== undefined && latest[sys].v === '') { 
+          latest[sys].v = log.versao || ''; 
+          latest[sys].c = log.custo || ''; 
+        }
+      }
+
+      const setVal = (id, val) => { const el = document.getElementById(id); if(el && val && el.value === '') el.value = val; };
+      
+      setVal('bp-drv', latest['DRV'].v); setVal('bp-drv-cost', latest['DRV'].c);
+      setVal('bp-sen', latest['SEN'].v); setVal('bp-sen-cost', latest['SEN'].c);
+      setVal('bp-mec1', latest['MEC_INT'].v); setVal('bp-mec1-cost', latest['MEC_INT'].c);
+      setVal('bp-mec2', latest['MEC_ELE'].v); setVal('bp-mec2-cost', latest['MEC_ELE'].c);
+      setVal('bp-sw', latest['SW'].v);
+      
+      calcTotalCost();
+      showToast('Dados puxados da Nuvem!', 'success');
+    });
+
+    document.getElementById('btnSaveBlueprint').addEventListener('click', async () => {
+      const nome = document.getElementById('robotName').value.trim();
+      const ver = document.getElementById('robotVersion').value.trim();
+
+      if(!nome || !ver) { showToast('Preencha o Nome e a Versão do Robô!', 'error'); return; }
+      
+      const global = `${nome} - ${ver}`;
+      
+      const btn = document.getElementById('btnSaveBlueprint');
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A guardar...';
+      btn.classList.add('loading');
+
+      const blueprintData = {
+        versaoGlobal: global,
+        drv: document.getElementById('bp-drv').value,
+        sen: document.getElementById('bp-sen').value,
+        mec1: document.getElementById('bp-mec1').value,
+        mec2: document.getElementById('bp-mec2').value,
+        sw: document.getElementById('bp-sw').value,
+        peso: document.getElementById('robotWeight').value,
+        sizingAprovado: document.getElementById('btnSize').classList.contains('active-orange'),
+        custoTotal: document.getElementById('bomTotal').innerText,
+        timestamp: new Date()
+      };
+
+      try {
+        await addDoc(collection(db, "blueprints"), blueprintData);
+        showToast('Blueprint guardado!', 'success');
+        btn.innerHTML = '<i class="fas fa-check"></i> Blueprint Guardado!';
+        btn.classList.remove('loading');
+        btn.classList.add('success');
+        
+        setTimeout(() => { btn.innerHTML = '<i class="fas fa-save"></i> Atualizar Blueprint'; btn.classList.remove('success'); }, 1500);
+      } catch (e) {
+        console.error(e);
+        showToast('Erro ao gravar o Blueprint.', 'error');
+        btn.innerHTML = '<i class="fas fa-times"></i> Erro';
+        btn.classList.remove('loading');
+      }
+    });
+
+    // Gráficos
+    const refreshCharts = () => {
+      const isDark = document.body.classList.contains('dark-theme');
+      const textColor = isDark ? '#ffffff' : '#111827';
+      const gridColor = isDark ? '#333333' : '#e5e7eb';
+      const orange = '#FF5E00';
+      const green = '#10b981';
+      const blue = '#3b82f6';
+      const bgOrange = 'rgba(255, 94, 0, 0.2)';
+
+      Object.keys(chartsInstances).forEach(key => { if(chartsInstances[key]) chartsInstances[key].destroy(); });
+
+      const sysCounts = { 'MEC_INT': 0, 'MEC_ELE': 0, 'DRV': 0, 'SEN': 0, 'SW': 0, 'STR': 0 };
+      engLogsData.forEach(log => {
+        let s = log.ticket ? log.ticket.split('-')[0] : log.sys;
+        if (s === 'MEC') s = 'MEC_INT'; 
+        if(sysCounts[s] !== undefined) sysCounts[s]++;
+      });
+
+      chartsInstances.polar = new Chart(document.getElementById('devOpsEffortChart'), {
+        type: 'polarArea',
+        data: {
+          labels: ['Intake', 'Elevador', 'Chassi', 'Sensores', 'Código', 'Estratégia'],
+          datasets: [{
+            data: [sysCounts.MEC_INT, sysCounts.MEC_ELE, sysCounts.DRV, sysCounts.SEN, sysCounts.SW, sysCounts.STR],
+            backgroundColor: [ orange, '#f59e0b', blue, '#8b5cf6', green, '#ef4444' ],
+            borderWidth: 1, borderColor: isDark ? '#121212' : '#fff'
+          }]
+        },
+        options: { maintainAspectRatio: false, scales: { r: { grid: { color: gridColor }, ticks: { display: false } } }, plugins: { legend: { display: true, position: 'right', labels: { color: textColor } } } }
+      });
+
+      if(matchesData.length === 0) return;
+
+      let labels = []; let totals = []; let autos = []; let teles = []; let efficiencySum = 0; let cleanMatches = 0; let count = 0; let foulsTotal = 0;
+      let problemasCount = {};
+      let sumDetails = {
+        autoLeave: 0, autoClass: 0, autoOver: 0, autoPat: 0,
+        teleClass: 0, teleOver: 0, teleDepot: 0, telePat: 0, teleBase: 0, teleDouble: 0
+      };
+
+      matchesData.forEach((d, index) => {
+        labels.push(`Partida ${index + 1}`);
+        totals.push(d.total || 0); autos.push(d.auto || 0); teles.push(d.tele || 0);
+        
+        if(d.target && d.target > 0) efficiencySum += ((d.total || 0) / d.target) * 100;
+        if(d.problemas && d.problemas.includes('Partida Limpa')) cleanMatches++;
+        if(d.fouls) foulsTotal += d.fouls;
+
+        if(d.problemas && d.problemas !== 'Limpa' && !d.problemas.includes('Partida Limpa')) {
+          d.problemas.split(', ').forEach(p => { problemasCount[p] = (problemasCount[p] || 0) + 1; });
+        }
+
+        if(d.details) {
+          for(let key in sumDetails) {
+            sumDetails[key] += (d.details[key] || 0);
+          }
+        }
+        count++;
+      });
+
+      const avgTotal = totals.reduce((a,b)=>a+b,0)/count;
+      const bestMatch = Math.max(...totals);
+      const mean = avgTotal;
+      const variance = totals.reduce((a,b) => a + Math.pow(b - mean, 2), 0) / count;
+      const stdDev = Math.sqrt(variance);
+      const cv = mean > 0 ? (stdDev / mean) * 100 : 0;
+      const reliability = Math.round((cleanMatches / count) * 100);
+      document.getElementById('avgTotal').innerText = avgTotal.toFixed(0);
+      document.getElementById('bestMatch').innerText = bestMatch;
+      document.getElementById('consistencyCV').innerText = cv.toFixed(1) + '%';
+      document.getElementById('reliabilityRate').innerText = reliability + '%';
+
+      const movingAvg = [];
+      const windowSize = 3;
+      for (let i = 0; i < totals.length; i++) {
+        if (i < windowSize - 1) movingAvg.push(null);
+        else {
+          const sum = totals.slice(i - windowSize + 1, i + 1).reduce((a,b) => a + b, 0);
+          movingAvg.push(sum / windowSize);
+        }
+      }
+      chartsInstances.history = new Chart(document.getElementById('scoreHistoryChart'), {
+        type: 'line',
+        data: { 
+          labels: labels, 
+          datasets: [
+            { label: 'Pts Totais', data: totals, borderColor: orange, backgroundColor: bgOrange, fill: true, tension: 0.3, borderWidth: 3, pointRadius: 4, pointBackgroundColor: orange },
+            { label: 'Média Móvel (3)', data: movingAvg, borderColor: blue, borderDash: [5,5], pointRadius: 0, fill: false, borderWidth: 2 }
+          ] 
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: { y: { grid: {color: gridColor}, ticks: { color: textColor } }, x: { grid: {display:false}, ticks: { color: textColor } } } }
+      });
+
+      const avgAuto = autos.reduce((a,b)=>a+b, 0)/count;
+      const avgTele = teles.reduce((a,b)=>a+b, 0)/count;
+      chartsInstances.avg = new Chart(document.getElementById('avgDistributionChart'), {
+        type: 'bar',
+        data: { labels: ['Autônomo', 'Tele-Op'], datasets: [{ label: 'Pontuação Média', data: [avgAuto, avgTele], backgroundColor: [blue, green], borderRadius: 6 }] },
+        options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: { y: { grid: {color: gridColor}, ticks: { color: textColor } }, x: { grid: {display: false}, ticks: { color: textColor } } } }
+      });
+
+      const finalEff = Math.round(efficiencySum / count);
+      chartsInstances.eff = new Chart(document.getElementById('efficiencyGaugeChart'), {
+        type: 'doughnut',
+        data: { labels: ['Eficiência Média', 'Perda'], datasets: [{ data: [finalEff, 100 - finalEff > 0 ? 100 - finalEff : 0], backgroundColor: [orange, isDark ? '#242424' : '#e5e7eb'], borderWidth: 0 }] },
+        options: { maintainAspectRatio: false, cutout: '75%', plugins: { legend: { labels: { color: textColor } } } }
+      });
+
+      const failuresWrapper = document.getElementById('failuresWrapper');
+      if (Object.keys(problemasCount).length === 0) {
+        failuresWrapper.innerHTML = `<div style="text-align:center; color:${green}; display:flex; flex-direction:column; align-items:center;"><i class="fas fa-check-circle" style="font-size:40px; margin-bottom:10px;"></i><span style="font-weight:700;">Tudo Limpo!</span><span style="font-size:12px; color:var(--text-muted);">Nenhum problema registado.</span><canvas id="failuresChart" style="display:none;"></canvas></div>`;
+      } else {
+        if(!document.getElementById('failuresChart')) failuresWrapper.innerHTML = '<canvas id="failuresChart"></canvas>';
+        chartsInstances.failures = new Chart(document.getElementById('failuresChart'), {
+          type: 'pie',
+          data: {
+            labels: Object.keys(problemasCount),
+            datasets: [{
+              data: Object.values(problemasCount),
+              backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#64748b'],
+              borderWidth: 2, borderColor: isDark ? '#121212' : '#fff'
+            }]
+          },
+          options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } } }
+        });
+      }
+
+      const maxAuto = Math.max(...autos, 1);
+      const maxTele = Math.max(...teles, 1);
+      const normAuto = (avgAuto / maxAuto) * 100;
+      const normTele = (avgTele / maxTele) * 100;
+      const foulPenaltyImpact = Math.max(0, 100 - (foulsTotal / count)); 
+      chartsInstances.radar = new Chart(document.getElementById('robotProfileRadarChart'), {
+        type: 'radar',
+        data: {
+          labels: ['Força Auto', 'Força Tele', 'Eficiência', 'Fiabilidade', 'Disciplina'],
+          datasets: [{
+            data: [normAuto, normTele, finalEff, reliability, foulPenaltyImpact],
+            backgroundColor: bgOrange, borderColor: orange, pointBackgroundColor: orange,
+          }]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } }, scales: { r: { angleLines: { color: gridColor }, grid: { color: gridColor }, pointLabels: { color: textColor }, ticks: { display: false, min: 0, max: 100 } } } }
+      });
+
+      const scatterData = matchesData.map(m => ({ x: m.auto || 0, y: m.total || 0 }));
+      chartsInstances.scatter = new Chart(document.getElementById('scatterAutoTotalChart'), {
+        type: 'scatter',
+        data: { datasets: [{ label: 'Partidas', data: scatterData, backgroundColor: orange, pointRadius: 6 }] },
+        options: {
+          maintainAspectRatio: false,
+          scales: {
+            x: { title: { display: true, text: 'Pontos Autônomo', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } },
+            y: { title: { display: true, text: 'Pontos Totais', color: textColor }, grid: { color: gridColor }, ticks: { color: textColor } }
+          },
+          plugins: { legend: { labels: { color: textColor } } }
+        }
+      });
+
+      const contribLabels = ['Leave Auto', 'Classified Auto', 'Overflow Auto', 'Pattern Auto', 'Classified Tele', 'Overflow Tele', 'Depot Tele', 'Pattern Tele', 'Base', 'Double Base'];
+      const contribData = [
+        sumDetails.autoLeave / count,
+        sumDetails.autoClass / count,
+        sumDetails.autoOver / count,
+        sumDetails.autoPat / count,
+        sumDetails.teleClass / count,
+        sumDetails.teleOver / count,
+        sumDetails.teleDepot / count,
+        sumDetails.telePat / count,
+        sumDetails.teleBase / count,
+        sumDetails.teleDouble / count
+      ];
+      const filteredLabels = contribLabels.filter((_, i) => contribData[i] > 0);
+      const filteredData = contribData.filter(v => v > 0);
+      
+      chartsInstances.contribution = new Chart(document.getElementById('contributionPieChart'), {
+        type: 'pie',
+        data: {
+          labels: filteredLabels.length ? filteredLabels : ['Sem dados'],
+          datasets: [{
+            data: filteredData.length ? filteredData : [1],
+            backgroundColor: ['#FF5E00','#F59E0B','#3B82F6','#10B981','#8B5CF6','#EC4899','#14B8A6','#F97316','#6366F1','#A855F7']
+          }]
+        },
+        options: { maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: textColor } } } }
+      });
+    };
+
+    document.getElementById('btnRefreshCharts').addEventListener('click', refreshCharts);
+
+    // Inicializar
+    calcMatchScore();
+    updateMatchDropdown();
+    switchTab('match');
+  </script>
+</body>
+</html>
