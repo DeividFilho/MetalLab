@@ -1,7 +1,7 @@
 // js/auth.js
 import { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from './firebase.js';
 import { initDatabaseListeners, stopDatabaseListeners } from './main.js';
-import { showToast, hideGlobalSpinner } from './ui.js'; // <-- Correção 1: Importando a função
+import { showToast, hideGlobalSpinner } from './ui.js';
 
 const loginScreen = document.getElementById('login-screen');
 const appContainer = document.getElementById('app-container');
@@ -25,16 +25,28 @@ export function initAuth() {
       }
       if(appContainer) appContainer.style.display = 'block';
       
-      // Correção 9: Encadeamento Opcional (Optional Chaining)
       if(userBadge) userBadge.innerText = user.email?.split('@')[0] || 'Operador';
       
       if(!dbInitialized) {
         initDatabaseListeners();
         dbInitialized = true;
         showToast(`Sessão iniciada como ${user.email?.split('@')[0] || 'Operador'}`, 'success');
+
+        // ====== NOVA LÓGICA DE PRIMEIRO LOGIN ======
+        if (!localStorage.getItem('hasSeenWelcomeModal')) {
+          const welcomeOverlay = document.getElementById('welcomeModalOverlay');
+          const welcomeModal = document.getElementById('welcomeModal');
+          
+          if (welcomeOverlay && welcomeModal) {
+            setTimeout(() => {
+              welcomeOverlay.classList.add('show');
+              welcomeModal.classList.add('show');
+            }, 800);
+          }
+        }
+        // ===========================================
       }
     } else {
-      // <-- Correção 2: Esconde o spinner se o utilizador não estiver logado
       hideGlobalSpinner(); 
 
       if(loginScreen) {
@@ -102,14 +114,14 @@ export function initAuth() {
 
   if(btnCancelLogout) btnCancelLogout.addEventListener('click', closeModal);
 
-  // Fechar com a tecla Escape
+  // Fechar Modal Logout com Escape
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && logoutModalOverlay?.classList.contains('show')) {
       closeModal();
     }
   });
 
-  // Correção 5: Fechar clicando no Overlay (Fora do modal)
+  // Fechar clicando fora (Logout)
   if(logoutModalOverlay) {
     logoutModalOverlay.addEventListener('click', (e) => {
       if (e.target === logoutModalOverlay) closeModal();
@@ -121,6 +133,22 @@ export function initAuth() {
       closeModal();
       try { await signOut(auth); } 
       catch (error) { showToast('Erro ao sair do sistema.', 'error'); }
+    });
+  }
+
+  // ====== EVENTOS DO MODAL DE BOAS-VINDAS ======
+  const btnAckWelcome = document.getElementById('btnAcknowledgeWelcome');
+  const welcomeOverlay = document.getElementById('welcomeModalOverlay');
+  const welcomeModal = document.getElementById('welcomeModal');
+
+  if(btnAckWelcome) {
+    btnAckWelcome.addEventListener('click', () => {
+      // Salva no navegador que já foi visto
+      localStorage.setItem('hasSeenWelcomeModal', 'true');
+      
+      // Fecha a janela
+      if(welcomeModal) welcomeModal.classList.remove('show');
+      if(welcomeOverlay) setTimeout(() => welcomeOverlay.classList.remove('show'), 200);
     });
   }
 }

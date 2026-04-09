@@ -530,36 +530,80 @@
             <span class="panel-title"><i class="fas fa-book"></i> Manual de Operações (Mission Control)</span>
           </div>
 
-          <div style="text-align: center; margin-bottom: 40px;">
-            <h3 style="font-size: 24px; color: var(--text-main); margin-bottom: 16px;">Arquitetura Baseada em Versões</h3>
-            <p style="color: var(--text-muted); max-width: 750px; margin: 0 auto 30px auto; font-size: 15px;">
-              O Mission Control funciona com um sistema de <strong>Entidades Hierárquicas</strong>. Isto significa que tudo o que você regista (uma partida, uma falha, um teste de QA) está "amarrado" a uma <strong>Versão Específica</strong> do robô.
+          <div style="text-align: center; margin-bottom: 40px; padding: 20px; background: var(--bg-input); border-radius: var(--radius-md); border: 1px solid var(--border-light);">
+            <h3 style="font-size: 20px; color: var(--orange); margin-bottom: 12px;"><i class="fas fa-sitemap"></i> Arquitetura Baseada em Versões</h3>
+            <p style="color: var(--text-muted); max-width: 800px; margin: 0 auto; font-size: 14px; line-height: 1.6;">
+              O MetalLab funciona com um sistema de <strong>Entidades Hierárquicas</strong>. Isso significa que todas as partidas, falhas e testes de QA estão "amarrados" à versão específica do robô selecionada no menu superior. <strong>A regra de ouro é:</strong> confirme sempre a versão ativa antes de registrar um dado!
             </p>
           </div>
 
-          <div class="help-grid">
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text-main); border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">Guia dos Módulos</h3>
+          
+          <div class="help-grid" style="margin-bottom: 40px;">
+            
             <div class="help-card">
-              <div class="help-icon"><i class="fas fa-sitemap"></i></div>
-              <h3>1. O Workflow Correto</h3>
-              <p>Siga este ciclo de desenvolvimento para manter o seu banco de dados sempre preciso e limpo:</p>
-              <ul>
-                <li><i class="fas fa-arrow-right"></i> <strong>Blueprint:</strong> Comece por criar uma Nova Versão do Robô (Ex: "v1.0").</li>
-                <li><i class="fas fa-arrow-right"></i> <strong>DevOps:</strong> Registe as modificações e as peças que testou nessa versão.</li>
-                <li><i class="fas fa-arrow-right"></i> <strong>Partidas:</strong> Jogue! Os pontos vão diretamente para a versão ativa no topo da tela.</li>
-                <li><i class="fas fa-arrow-right"></i> <strong>Analytics:</strong> Veja os gráficos para saber se precisa criar uma "v1.1".</li>
+              <div class="help-icon" style="color: #3b82f6;"><i class="fas fa-cubes"></i></div>
+              <h3>1. Blueprint & Bom</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Onde a engenharia começa.</p>
+              <ul style="font-size: 13px; padding-left: 20px; color: var(--text-muted);">
+                <li>Crie novas versões (Ex: v1.0, v1.1) para travar um "snapshot" mecânico do robô.</li>
+                <li>Atualize os custos para gerenciar o <strong>BOM (Bill of Materials)</strong> e o Sizing (18x18).</li>
               </ul>
             </div>
 
             <div class="help-card">
-              <div class="help-icon"><i class="fas fa-globe"></i></div>
-              <h3>2. O Seletor Global (Topo)</h3>
-              <p>O menu suspenso no topo é a "Máquina do Tempo" do sistema.</p>
-              <ul>
-                <li><i class="fas fa-exclamation-circle"></i> Tudo o que for salvo será guardado <strong>apenas</strong> na versão que estiver selecionada lá em cima.</li>
-                <li><i class="fas fa-chart-line"></i> Troque a versão no seletor e todos os gráficos e tabelas atualizarão magicamente para refletir o passado.</li>
+              <div class="help-icon" style="color: var(--orange);"><i class="fas fa-server"></i></div>
+              <h3>2. DevOps & QA</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Rastreamento de melhorias.</p>
+              <ul style="font-size: 13px; padding-left: 20px; color: var(--text-muted);">
+                <li><strong>Commit:</strong> Use para registrar trocas de peças, mudanças de código e resultados de Hipóteses.</li>
+                <li><strong>Drill (Teste):</strong> Use para executar protocolos padronizados de QA antes das partidas oficiais.</li>
               </ul>
             </div>
+
+            <div class="help-card">
+              <div class="help-icon" style="color: #10b981;"><i class="fas fa-gamepad"></i></div>
+              <h3>3. Match Logging</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Coleta de dados de arena.</p>
+              <ul style="font-size: 13px; padding-left: 20px; color: var(--text-muted);">
+                <li>Marque os pontos reais feitos na partida.</li>
+                <li>A <strong>Tag de Diagnóstico</strong> ("Partida Limpa", "Falha Mecânica") é vital para calcular a Fiabilidade do robô no painel de Analytics.</li>
+              </ul>
+            </div>
+
+            <div class="help-card">
+              <div class="help-icon" style="color: #8b5cf6;"><i class="fas fa-chart-pie"></i></div>
+              <h3>4. Analytics & Compare</h3>
+              <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 10px;">Inteligência de dados.</p>
+              <ul style="font-size: 13px; padding-left: 20px; color: var(--text-muted);">
+                <li><strong>Compare:</strong> Cruze duas versões para ver se a nova mecânica realmente trouxe mais pontos (ROI).</li>
+                <li>Selecione versões diferentes no topo para viajar no tempo e rever gráficos antigos.</li>
+              </ul>
+            </div>
+
           </div>
+
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 20px; color: var(--text-main); border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">Glossário de Métricas (KPIs)</h3>
+          
+          <div class="grid-2">
+            <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-sm); border-left: 3px solid #10b981;">
+              <strong style="display: block; margin-bottom: 6px; font-size: 14px;"><i class="fas fa-shield-alt"></i> Fiabilidade</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Porcentagem de partidas jogadas sem falhas técnicas ou mecânicas. Baseado unicamente em partidas marcadas com a tag "Partida Limpa".</p>
+            </div>
+            <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-sm); border-left: 3px solid #3b82f6;">
+              <strong style="display: block; margin-bottom: 6px; font-size: 14px;"><i class="fas fa-wave-square"></i> Consistência (CV)</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Calculado via Coeficiente de Variação Estatística. Mede a oscilação de pontos entre as partidas. <strong>Quanto menor a porcentagem, mais previsível é o robô.</strong></p>
+            </div>
+            <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-sm); border-left: 3px solid var(--orange);">
+              <strong style="display: block; margin-bottom: 6px; font-size: 14px;"><i class="fas fa-bullseye"></i> Eficiência Global</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">A relação entre os pontos totais feitos na arena e a Meta Estipulada (Target Pts) configurada no momento do registro da partida.</p>
+            </div>
+            <div style="background: var(--bg-surface); padding: 16px; border-radius: var(--radius-sm); border-left: 3px solid #ef4444;">
+              <strong style="display: block; margin-bottom: 6px; font-size: 14px;"><i class="fas fa-balance-scale-right"></i> Custo por Ponto (ROI)</strong>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Disponível na aba "Compare". Divide o custo total das peças do robô (BOM) pela média de pontos. Mostra se um investimento financeiro refletiu em pontos na arena.</p>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -567,6 +611,28 @@
   </div> 
 
   <div class="toast-container" id="toastContainer"></div>
+
+  <div class="custom-modal-overlay" id="welcomeModalOverlay">
+    <div class="custom-modal" id="welcomeModal" style="max-width: 450px; text-align: left;">
+      <div class="modal-title" style="color: var(--orange); text-align: center; font-size: 20px; margin-bottom: 16px;">
+        <i class="fas fa-rocket"></i> Bem-vindo ao MetalLab
+      </div>
+      <div class="modal-text" style="color: var(--text-main);">
+        <p style="margin-bottom: 12px; font-size: 15px;"><strong>Olá, Piloto/Engenheiro!</strong> Detectamos que é a sua primeira vez no Mission Control.</p>
+        <p style="margin-bottom: 16px; font-size: 13px; color: var(--text-muted);">Para manter nossos dados precisos, lembre-se destas 3 regras de ouro:</p>
+        <ul style="padding-left: 20px; margin-bottom: 20px; color: var(--text-muted); font-size: 13px; line-height: 1.6;">
+          <li><strong>Versões:</strong> Tudo o que você regista (partidas, commits) fica salvo na <em>Versão Ativa</em> escolhida no menu superior.</li>
+          <li><strong>DevOps:</strong> Trocou uma peça? Fez código novo? Registre um "Commit" na aba DevOps.</li>
+          <li><strong>Ajuda:</strong> Leia a aba <i class="fas fa-book"></i> Ajuda para entender os Gráficos e KPIs (Fiabilidade, ROI, etc).</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn btn-confirm" id="btnAcknowledgeWelcome" style="background: var(--orange); width: 100%; border: none;">
+          ENTENDIDO, INICIAR MISSÃO
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="custom-modal-overlay" id="logoutModalOverlay">
     <div class="custom-modal" id="logoutModal">
